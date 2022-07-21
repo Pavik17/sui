@@ -41,6 +41,19 @@ macro_rules! exit_main {
     };
 }
 
+#[macro_export]
+macro_rules! log_if_err {
+    ($e:expr, $($arg:tt)+) => {
+        {
+            let res = $e;
+            if let Err(e) = &res {
+                tracing::info!($($arg)+, "{}", e);
+            }
+            res
+        }
+    }
+}
+
 /// Custom error type for Sui.
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, Error, Hash)]
 #[allow(clippy::large_enum_variant)]

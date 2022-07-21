@@ -47,7 +47,7 @@ use sui_types::{
     committee::Committee,
     crypto::AuthoritySignature,
     error::{SuiError, SuiResult},
-    fp_ensure,
+    fp_ensure, log_if_err,
     messages::*,
     object::{Object, ObjectFormatOptions, ObjectRead},
     storage::{BackingPackageStore, DeleteKind, Storage},
@@ -427,6 +427,7 @@ impl AuthorityState {
         }
 
         let resp = self.process_certificate(tx_guard, &certificate).await?;
+        log_if_err!(resp, ?digest);
 
         let expected_effects_digest = signed_effects.digest();
         let observed_effects_digest = resp.signed_effects.as_ref().map(|e| e.digest());
@@ -467,7 +468,10 @@ impl AuthorityState {
         // for every tx.
         let tx_guard = self.database.acquire_tx_guard(&certificate).await?;
 
-        self.process_certificate(tx_guard, &certificate).await
+        log_if_err!(
+            self.process_certificate(tx_guard, &certificate).await,
+            ?digest
+        )
     }
 
     #[instrument(level = "trace", skip_all)]
